@@ -1,0 +1,179 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wchar.h>
+#include <locale.h>
+
+typedef struct Node {
+    char artist[100];
+    char song[100];
+    struct Node* next;
+    struct Node* prev;
+} Node;
+
+Node* head = NULL;
+
+void displayPlaylist() {
+    Node* current = head;
+    if (current == NULL) {
+        printf("A playlist está vazia.\n");
+        return;
+    }
+    do {
+        printf("%s - %s\n", current->artist, current->song);
+        current = current->next;
+    } while (current != head);
+}
+
+void insertSong(char artist[], char song[]) {
+    Node* newSong = (Node*)malloc(sizeof(Node));
+    strcpy(newSong->artist, artist);
+    strcpy(newSong->song, song);
+    if (head == NULL) {
+        head = newSong;
+        newSong->next = newSong;
+        newSong->prev = newSong;
+    } else {
+        newSong->next = head;
+        newSong->prev = head->prev;
+        head->prev->next = newSong;
+        head->prev = newSong;
+    }
+}
+
+void deleteSong(char song[]) {
+    if (head == NULL) {
+        printf("A playlist está vazia.\n");
+        return;
+    }
+    Node* current = head;
+    Node* toDelete = NULL;
+    int found = 0;
+    do {
+        if (strcmp(current->song, song) == 0) {
+            toDelete = current;
+            found = 1;
+            break;
+        }
+        current = current->next;
+    } while (current != head);
+
+    if (found) {
+        if (toDelete == head) {
+            head = toDelete->next;
+        }
+        toDelete->prev->next = toDelete->next;
+        toDelete->next->prev = toDelete->prev;
+        free(toDelete);
+        printf("Música removida com sucesso.\n");
+    } else {
+        printf("Música não encontrada na playlist.\n");
+    }
+}
+
+void searchSong(char song[]) {
+    Node* current = head;
+    int found = 0;
+    do {
+        if (strcmp(current->song, song) == 0) {
+            printf("%s - %s\n", current->artist, current->song);
+            found = 1;
+            break;
+        }
+        current = current->next;
+    } while (current != head);
+
+    if (!found) {
+        printf("Música não encontrada na playlist.\n");
+    }
+}
+
+void savePlaylistToFile() {
+    FILE* file = fopen("musicas.txt", "w");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo para escrita.\n");
+        return;
+    }
+    Node* current = head;
+    do {
+        fprintf(file, "%s;%s\n", current->artist, current->song);
+        current = current->next;
+    } while (current != head);
+    fclose(file);
+}
+
+int main() {
+	
+	 setlocale(LC_ALL, "Portuguese");
+	
+    FILE* file = fopen("musicas.txt", "w");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return 1;
+    }
+
+    char artist[100], song[100];
+    while (fscanf(file, "%99[^;];%99[^\n]\n", artist, song) != EOF) {
+        insertSong(artist, song);
+    }
+    fclose(file);
+
+    int choice;
+    char searchQuery[100];
+
+    do {
+        printf("\nMenu:\n");
+        printf("1. Exibição da playlist pela ordem de cadastro\n");
+        printf("2. Exibição da playlist ordenada pelo nome das músicas\n");
+        printf("3. Inserção de nova música\n");
+        printf("4. Remoção de uma música\n");
+        printf("5. Busca por uma música\n");
+        printf("6. Avançar para a próxima música\n");
+        printf("7. Retornar à música anterior\n");
+        printf("8. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                displayPlaylist();
+                break;
+            case 2:
+                // Implementar ordenação da playlist por nome das músicas
+                break;
+            case 3:
+                printf("Insira o nome do artista: ");
+                scanf(" %[^\n]", artist);
+                printf("Insira o nome da música: ");
+                scanf(" %[^\n]", song);
+                insertSong(artist, song);
+                savePlaylistToFile();
+                printf("Música inserida com sucesso.\n");
+                break;
+            case 4:
+                printf("Insira o nome da música a ser removida: ");
+                scanf(" %[^\n]", song);
+                deleteSong(song);
+                savePlaylistToFile();
+                break;
+            case 5:
+                printf("Insira o nome da música a ser buscada: ");
+                scanf(" %[^\n]", searchQuery);
+                searchSong(searchQuery);
+                break;
+            case 6:
+                // Implementar avançar para a próxima música
+                break;
+            case 7:
+                // Implementar retornar à música anterior
+                break;
+            case 8:
+                savePlaylistToFile();
+                break;
+            default:
+                printf("Escolha uma opção válida.\n");
+        }
+    } while (choice != 8);
+
+    return 0;
+}
